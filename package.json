@@ -1,0 +1,32 @@
+{
+	"name": "dinit-graph",
+	"version": "0.1.0",
+	"type": "module",
+	"description": "A CLI built with Crust",
+	"files": [
+		"dist/cli",
+		"dist/cli.cmd",
+		"dist/*-bun-*"
+	],
+	"bin": {
+		"dinit-graph": "dist/cli"
+	},
+	"scripts": {
+		"dev": "bun run src/cli.ts",
+		"build": "crust build --target linux-x64",
+		"package": "crust build --package --target linux-x64",
+		"publish": "crust publish --target linux-x64 --stage-dir dist/npm",
+		"start": "./dist/cli",
+		"check:types": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@crustjs/core": "latest",
+		"@crustjs/crust": "latest",
+		"@crustjs/plugins": "latest",
+		"@types/bun": "latest",
+		"typescript": "^5"
+	},
+	"dependencies": {
+		"digraph-js": "^2.2.4"
+	}
+}
