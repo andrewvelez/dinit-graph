@@ -4,6 +4,7 @@
  */
 import { Crust } from "@crustjs/core";
 import { helpPlugin, versionPlugin } from "@crustjs/plugins";
+import { DiGraph } from "digraph-js";
 import pkg from "../package.json";
 
 const cli = new Crust("dinit-graph")
@@ -20,8 +21,12 @@ const cli = new Crust("dinit-graph")
 			description: "directory of Dinit service files",
 		},
 	])
-	.run(({ args, flags }) => {
-		console.log(`${args.serviceDirectory}!`);
+	.run(({ args }) => {
+
+		// valid service directory
+
+		// build digraph
+
 	});
 
 await cli.execute();
