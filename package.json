@@ -13,7 +13,7 @@
 	},
 	"scripts": {
 		"dev": "bun run src/cli.ts",
-		"build": "crust build --target linux-x64 --compile --minify --sourcemap ./src/cli.ts --outfile ./dist/dinit-graph",
+		"build": "crust build --target linux-x64 --minify --outfile ./dist/dinit-graph",
 		"package": "crust build --package --target linux-x64",
 		"publish": "crust publish --target linux-x64 --stage-dir dist/npm",
 		"start": "./dist/dinit-graph",

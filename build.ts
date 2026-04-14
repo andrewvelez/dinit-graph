@@ -2,22 +2,23 @@
 /**
  * This script acts as a convenience wrapper around the CLI build command
  */
+export { };
+
 const buildCmd = [
   "bun", "build",
-  "--compile",        // Create a standalone executable
-  "--minify",         // Minify the output
-  "--sourcemap",      // Generate a sourcemap
-  "./src/index.ts",   // Your CLI's entrypoint
+  "--compile",
+  "--minify",
+  "--sourcemap",
+  "./src/index.ts",
   "--outfile", "./bin/my-cli"
 ].join(" ");
 
-// Execute the build command
 console.log(`Building: ${buildCmd}`);
 const result = await Bun.spawn(buildCmd.split(" "), {
   stdio: ["inherit", "inherit", "inherit"],
 });
 
-if (result.exited === 0) {
+if (await result.exited === 0) {
   console.log("✅ Build successful!");
 } else {
   console.error("❌ Build failed.");
