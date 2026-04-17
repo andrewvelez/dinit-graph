@@ -9,8 +9,8 @@ const buildCmd = [
   "--compile",
   "--minify",
   "--sourcemap",
-  "./src/index.ts",
-  "--outfile", "./bin/my-cli"
+  "./src/dinit-graph-cli.ts",
+  "--outfile", "./bin/dinit-graph"
 ].join(" ");
 
 console.log(`Building: ${buildCmd}`);

@@ -12,8 +12,8 @@
 		"dinit-graph": "dist/dinit-graph"
 	},
 	"scripts": {
-		"dev": "bun run src/cli.ts",
-		"build": "crust build --target linux-x64 --minify --outfile ./dist/dinit-graph",
+		"dev": "bun run src/dinit-graph-cli.ts",
+		"build": "crust build --entry ./src/dinit-graph-cli.ts --target linux-x64 --minify --outfile ./dist/dinit-graph",
 		"package": "crust build --package --target linux-x64",
 		"publish": "crust publish --target linux-x64 --stage-dir dist/npm",
 		"start": "./dist/dinit-graph",
