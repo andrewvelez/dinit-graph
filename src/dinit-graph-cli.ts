@@ -17,10 +17,10 @@ interface DinitProperty {
 let ServiceDirProperties = new Map<string, DinitProperty[]>();
 
 function validateArgs(args: { serviceDirectory: string }): string {
-	const targetDirFile = Bun.file(args.serviceDirectory ?? "");
-	const bootServiceFile = Bun.file(targetDirFile + "/boot");
-	const targetDirStats = fs.statSync(targetDirFile.name ?? "");
-	const bootServiceStats = fs.statSync(bootServiceFile.name ?? "");
+	const targetDirFile = (Bun.file(args.serviceDirectory ?? ""))?.name ?? "";
+	const bootServiceFile = (Bun.file(targetDirFile + "/boot"))?.name ?? "";
+	const targetDirStats = fs.statSync(targetDirFile ?? "");
+	const bootServiceStats = fs.statSync(bootServiceFile ?? "");
 
 	// Validate the inputs
 	if (!targetDirStats || !targetDirStats.isDirectory) {
@@ -30,7 +30,7 @@ function validateArgs(args: { serviceDirectory: string }): string {
 		throw new Error("A valid boot service file was not found.");
 	}
 
-	return targetDirFile?.name ?? "";
+	return targetDirFile;
 }
 
 /**
