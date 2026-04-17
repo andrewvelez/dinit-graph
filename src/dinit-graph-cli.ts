@@ -14,15 +14,12 @@ interface DinitProperty {
 	serviceName: string,
 }
 
-let ServiceDirProperties = new Map<string, DinitProperty[]>();
-
 function validateArgs(args: { serviceDirectory: string }): string {
-	const targetDirFile = (Bun.file(args.serviceDirectory ?? ""))?.name ?? "";
-	const bootServiceFile = (Bun.file(targetDirFile + "/boot"))?.name ?? "";
-	const targetDirStats = fs.statSync(targetDirFile ?? "");
-	const bootServiceStats = fs.statSync(bootServiceFile ?? "");
+	const targetDir = (Bun.file(args.serviceDirectory ?? ""))?.name ?? "";
+	const bootService = (Bun.file(targetDir + "/boot"))?.name ?? "";
+	const targetDirStats = fs.statSync(targetDir ?? "");
+	const bootServiceStats = fs.statSync(bootService ?? "");
 
-	// Validate the inputs
 	if (!targetDirStats || !targetDirStats.isDirectory) {
 		throw new Error("Service directory is not valid or doesn't exist.");
 	}
@@ -30,7 +27,7 @@ function validateArgs(args: { serviceDirectory: string }): string {
 		throw new Error("A valid boot service file was not found.");
 	}
 
-	return targetDirFile;
+	return targetDir;
 }
 
 /**
@@ -72,6 +69,7 @@ function parseProperties(serviceFile: string): DinitProperty[] {
 function parsePropertiesDirectory(targetDirectoryFile: string): Map<string, DinitProperty[]> {
 	const properties = new Map<string, DinitProperty[]>();
 
+	let currentFile: string;
 	fs.readdirSync(targetDirectoryFile ?? "",
 		{
 			withFileTypes: true,
@@ -81,7 +79,8 @@ function parsePropertiesDirectory(targetDirectoryFile: string): Map<string, Dini
 			return !file.isDirectory;
 		})
 		.forEach(file => {
-			properties.set(file.name ?? "", parseProperties(file.parentPath + file.name));
+			currentFile = (Bun.file(file.parentPath + file.name))?.name ?? "";
+			properties.set(currentFile, parseProperties(currentFile));
 		});
 
 	return properties;
@@ -92,17 +91,17 @@ function parsePropertiesDirectory(targetDirectoryFile: string): Map<string, Dini
  * @param dag 
  * @param serviceFile 
  */
-function addDependencyPropsRecursively(dag: DirectedAcyclicGraph, srv: string) {
-	if (!dag || !srv) {
+function addDependencyPropsRecursively(dag: DirectedAcyclicGraph, allServiceProps: Map<string, DinitProperty[]>, srv: string) {
+	if (!dag || !allServiceProps || !srv) {
 		throw ReferenceError("objects passed to method are null");
 	}
 
-	const properties = ServiceDirProperties.get(srv);
+	const properties = allServiceProps.get(srv);
 	if (properties != null && properties != undefined) {
 		for (let prop of properties) {
 			if (!dag.hasVertex(prop.serviceName)) {
 				dag.addVertex(prop.serviceName);
-				addDependencyPropsRecursively(dag, prop.serviceName);
+				addDependencyPropsRecursively(dag, allServiceProps, prop.serviceName);
 			}
 			if (dag.hasVertex(prop.serviceName) && !dag.hasEdge(srv, prop.serviceName)) {
 				dag.addEdge(srv, prop.serviceName);
@@ -128,13 +127,14 @@ const cli = new Crust("dinit-graph")
 	])
 	.run(({ args }) => {
 
-		const targetDirectory = validateArgs(args);
-		ServiceDirProperties = parsePropertiesDirectory(targetDirectory);
-		const bootServiceFile = (Bun.file(targetDirectory + "/boot"))?.name ?? "";
-		const orderedGraph = new DirectedAcyclicGraph(bootServiceFile);
-		addDependencyPropsRecursively(orderedGraph, bootServiceFile);
+		const targetDir = validateArgs(args);
+		const targetDirServiceProperties = parsePropertiesDirectory(targetDir);
+		const bootService = (Bun.file(targetDir + "/boot"))?.name ?? "";
+		const orderedGraph = new DirectedAcyclicGraph(bootService);
+		addDependencyPropsRecursively(orderedGraph, targetDirServiceProperties, bootService);
 
 		const sorted = orderedGraph.topologicalSort();
+		console.log(sorted.length);
 		console.log(sorted);
 
 	});
