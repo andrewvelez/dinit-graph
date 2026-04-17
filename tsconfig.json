@@ -1,6 +1,8 @@
 {
 	"compilerOptions": {
-		"lib": ["ESNext"],
+		"lib": [
+			"ESNext"
+		],
 		"target": "ESNext",
 		"module": "Preserve",
 		"moduleDetection": "force",
@@ -9,9 +11,14 @@
 		"verbatimModuleSyntax": true,
 		"noEmit": true,
 		"strict": true,
+		"noImplicitAny": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
 		"skipLibCheck": true,
 		"noFallthroughCasesInSwitch": true,
 		"noUncheckedIndexedAccess": true
 	},
-	"include": ["src"]
+	"include": [
+		"src"
+	]
 }

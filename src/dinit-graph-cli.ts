@@ -8,19 +8,15 @@ import { Crust } from "@crustjs/core";
 import { helpPlugin, versionPlugin } from "@crustjs/plugins";
 import pkg from "../package.json" assert { type: "json" };
 import { DirectedAcyclicGraph } from "./DirectedAcyclicGraph";
-import { ServiceDependencyGraph } from "./ServiceDependencyGraph";
 
 interface DinitProperty {
 	propertyName: string,
-	namedService: string,
+	serviceName: string,
 }
 
-interface ServiceInfo {
-	serviceFile: string,
-	serviceProperties: DinitProperty[],
-}
+let ServiceDirProperties = new Map<string, DinitProperty[]>();
 
-function validateArgs(args): string {
+function validateArgs(args: { serviceDirectory: string }): string {
 	const targetDirFile = Bun.file(args.serviceDirectory ?? "");
 	const bootServiceFile = Bun.file(targetDirFile + "/boot");
 	const targetDirStats = fs.statSync(targetDirFile.name ?? "");
@@ -41,7 +37,7 @@ function validateArgs(args): string {
  * Parses the Dinit properties for dependency ordering
  * @param serviceFile Dinit service file as BunFile
  */
-function parseFileDinitProperties(serviceFile: string): DinitProperty[] {
+function parseProperties(serviceFile: string): DinitProperty[] {
 	const serviceContent = fs.readFileSync(serviceFile ?? "",
 		{
 			encoding: "utf-8",
@@ -50,7 +46,8 @@ function parseFileDinitProperties(serviceFile: string): DinitProperty[] {
 
 	const propRegex = /^(depends-on|depends-ms|waits-for|after)\s*[:=]\s*(.+)$/gm;
 	const propArray: DinitProperty[] = [];
-	let line, match;
+	let line: string;
+	let match;
 
 	for (line of serviceContent.split('\n')) {
 		line = line.trim();
@@ -60,7 +57,7 @@ function parseFileDinitProperties(serviceFile: string): DinitProperty[] {
 		if (match) {
 			propArray.push({
 				propertyName: match[1] ?? "",
-				namedService: match[2] ?? ""
+				serviceName: match[2] ?? ""
 			});
 		}
 	}
@@ -72,9 +69,10 @@ function parseFileDinitProperties(serviceFile: string): DinitProperty[] {
  * parses dinit properties from all service files in a directory, returns ServiceInfo
  * 
  */
-function parseDirectoryDinitProperties(targetDirectoryFile: string): Map<string, ServiceInfo> {
-	let parsedServicesAndProperties: Map<string, ServiceInfo> = new Map<string, ServiceInfo>();
-	const files = fs.readdirSync(targetDirectoryFile ?? "",
+function parsePropertiesDirectory(targetDirectoryFile: string): Map<string, DinitProperty[]> {
+	const properties = new Map<string, DinitProperty[]>();
+
+	fs.readdirSync(targetDirectoryFile ?? "",
 		{
 			withFileTypes: true,
 			recursive: true,
@@ -83,14 +81,10 @@ function parseDirectoryDinitProperties(targetDirectoryFile: string): Map<string,
 			return !file.isDirectory;
 		})
 		.forEach(file => {
-			parsedServicesAndProperties.set(file.name ?? "",
-				{
-					serviceFile: Bun.file(file.parentPath + file.name).name ?? "",
-					serviceProperties: parseFileDinitProperties(file.parentPath + file.name),
-				});
+			properties.set(file.name ?? "", parseProperties(file.parentPath + file.name));
 		});
 
-	return parsedServicesAndProperties;
+	return properties;
 }
 
 /**
@@ -98,18 +92,21 @@ function parseDirectoryDinitProperties(targetDirectoryFile: string): Map<string,
  * @param dag 
  * @param serviceFile 
  */
-function addServiceDependencies(dag: DirectedAcyclicGraph, sourceService: ServiceInfo) {
-	if (!dag || !sourceService) {
+function addDependencyPropsRecursively(dag: DirectedAcyclicGraph, srv: string) {
+	if (!dag || !srv) {
 		throw ReferenceError("objects passed to method are null");
 	}
 
-	for (let itrProperty of sourceService.serviceProperties) {
-		if (!dag.hasVertex(itrProperty.namedService)) {
-			dag.addVertex(itrProperty.namedService);
-			addServiceDependencies(dag, itrProperty.namedService);
-		}
-		if (dag.hasVertex(itrProperty.namedService) && !dag.hasEdge(sourceService.serviceFile, itrProperty.namedService)) {
-			dag.addEdge(sourceService.serviceFile, itrProperty.namedService);
+	const properties = ServiceDirProperties.get(srv);
+	if (properties != null && properties != undefined) {
+		for (let prop of properties) {
+			if (!dag.hasVertex(prop.serviceName)) {
+				dag.addVertex(prop.serviceName);
+				addDependencyPropsRecursively(dag, prop.serviceName);
+			}
+			if (dag.hasVertex(prop.serviceName) && !dag.hasEdge(srv, prop.serviceName)) {
+				dag.addEdge(srv, prop.serviceName);
+			}
 		}
 	}
 }
@@ -130,17 +127,15 @@ const cli = new Crust("dinit-graph")
 		},
 	])
 	.run(({ args }) => {
+
 		const targetDirectory = validateArgs(args);
+		ServiceDirProperties = parsePropertiesDirectory(targetDirectory);
+		const bootServiceFile = (Bun.file(targetDirectory + "/boot"))?.name ?? "";
+		const orderedGraph = new DirectedAcyclicGraph(bootServiceFile);
+		addDependencyPropsRecursively(orderedGraph, bootServiceFile);
 
-		// First parse to extract all the Dinit properties from all files
-		const parsedServicesAndProperties = parseDirectoryDinitProperties(targetDirectory);
-
-		// Construct DAG starting at the boot service
-		const bootService = Bun.file(targetDirectory + "/boot");
-		const orderedGraph = new DirectedAcyclicGraph(bootService);
-
-		const test = new DirectedAcyclicGraph<string>(bootService?.name ?? "");
-		const test = new 
+		const sorted = orderedGraph.topologicalSort();
+		console.log(sorted);
 
 	});
 
