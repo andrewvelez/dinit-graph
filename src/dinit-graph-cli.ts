@@ -74,7 +74,7 @@ function parseProperties(serviceFile: string): DinitProperty[] {
 							if (subdirfile && !subdirfile.isDirectory()) {
 								propArray.push({
 									propertyName: split[0]?.trim() ?? "",
-									serviceName: path.join(dirServices, subdirfile.name),
+									serviceName: subdirfile.name,
 								});
 							}
 						}
