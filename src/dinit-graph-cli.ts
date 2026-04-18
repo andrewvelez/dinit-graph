@@ -38,7 +38,7 @@ function validateArgs(args: { serviceDirectory: string }): string {
 function parseProperties(serviceFile: string): DinitProperty[] {
 	const serviceContent = fs.readFileSync(serviceFile, { encoding: "utf-8" });
 
-	const propRegex = /^(depends-on|depends-ms|waits-for|after)(.d)*\s*[:=]\s*(.+)$/m;
+	const propRegex = /^(depends-on|depends-ms|waits-for|after)(.d)*\s*[:=]\s*(.+)$/;
 	const propArray: DinitProperty[] = [];
 
 	let index: number;
@@ -49,8 +49,8 @@ function parseProperties(serviceFile: string): DinitProperty[] {
 	for (let line of serviceContent.split('\n')) {
 
 		line = line.trim();
+		match = line.match(propRegex);
 
-		match = propRegex.exec(line);
 		if (match) {
 			if (!line || line.startsWith('#')) {
 				continue;
@@ -66,17 +66,21 @@ function parseProperties(serviceFile: string): DinitProperty[] {
 			}
 			if (split[0]?.trim().endsWith(".d")) {
 				dirServices = path.join(targetDirectory, split[1]?.trim() ?? "");
-				subdirFiles = fs.readdirSync(dirServices, { withFileTypes: true });
-				if (subdirFiles && subdirFiles.length > 0) {
-					for (let subdirfile of subdirFiles) {
-						if (subdirfile && !subdirfile.isDirectory) {
-							propArray.push({
-								propertyName: split[0]?.trim() ?? "",
-								serviceName: path.join(subdirfile.parentPath, subdirfile.name) ?? "",
-							});
+
+				if (fs.existsSync(dirServices)) {
+					subdirFiles = fs.readdirSync(dirServices, { withFileTypes: true });
+					if (subdirFiles && subdirFiles.length > 0) {
+						for (let subdirfile of subdirFiles) {
+							if (subdirfile && !subdirfile.isDirectory()) {
+								propArray.push({
+									propertyName: split[0]?.trim() ?? "",
+									serviceName: path.join(dirServices, subdirfile.name),
+								});
+							}
 						}
 					}
 				}
+
 			}
 			else {
 				propArray.push({
@@ -130,9 +134,11 @@ function parsePropertiesDirectory(targetDirectoryFile: string): Map<string, Dini
  * @param dag 
  * @param serviceFile 
  */
-function addDependencyPropsRecursively(dag: DirectedAcyclicGraph, allServiceProps: Map<string, DinitProperty[]>, srv: string) {
+function addDependencyPropsRecursively(dag: DirectedAcyclicGraph<string>, allServiceProps: Map<string, DinitProperty[]>,
+	srv: string) {
+
 	if (!dag || !allServiceProps || !srv) {
-		throw ReferenceError("objects passed to method are null");
+		throw new ReferenceError("objects passed to method are null");
 	}
 
 	const properties = allServiceProps.get(srv);
@@ -150,6 +156,7 @@ function addDependencyPropsRecursively(dag: DirectedAcyclicGraph, allServiceProp
 			}
 		}
 	}
+
 }
 
 const cli = new Crust("dinit-graph")

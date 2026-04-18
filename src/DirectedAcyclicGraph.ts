@@ -8,11 +8,10 @@ export class DirectedAcyclicGraph<T = string> {
   private vertices: Set<T>;
   private edges: Map<T, Set<T>>;
 
-  constructor(vertex: T) {
+  constructor(vertex?: T) {
     this.vertices = new Set<T>();
     this.edges = new Map<T, Set<T>>();
-
-    this.addVertex(vertex);
+    if (vertex !== undefined) this.addVertex(vertex);
   }
 
   // Add a single vertex
