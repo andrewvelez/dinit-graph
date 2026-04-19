@@ -1,0 +1,23 @@
+{
+  "uncurried": true,
+  "name": "rescript-bun-starter",
+  "sources": [
+    {
+      "dir": "src"
+    },
+    {
+      "dir": "tests"
+    }
+  ],
+  "package-specs": {
+    "module": "esmodule",
+    "in-source": true
+  },
+  "suffix": ".js",
+  "bs-dependencies": ["@rescript/core", "rescript-bun"],
+  "bsc-flags": [
+    "-open RescriptCore",
+    "-open RescriptBun",
+    "-open RescriptBun.Globals"
+  ]
+}
