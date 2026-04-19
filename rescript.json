@@ -13,9 +13,11 @@
     "module": "esmodule",
     "in-source": true
   },
-  "suffix": ".js",
-  "bs-dependencies": ["@rescript/core", "rescript-bun"],
-  "bsc-flags": [
+  "suffix": ".mjs",
+  "dependencies": [
+    "rescript-bun"
+  ],
+  "compiler-flags": [
     "-open RescriptCore",
     "-open RescriptBun",
     "-open RescriptBun.Globals"
