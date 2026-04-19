@@ -140,3 +140,9 @@ vite.config.ts.timestamp-*
 
 # out folder
 out
+
+# ReScript build artifacts
+lib/
+*.bs.js
+.bsb.lock
+.merlin
