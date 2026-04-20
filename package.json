@@ -2,7 +2,7 @@
   "name": "rescript-bun-starter",
   "version": "1.0.0",
   "description": "A starter for using Bun with ReScript.",
-  "main": "src/Main.js",
+  "main": "src/DinitGraph.js",
   "scripts": {
     "test": "bun test tests/*.test.*",
     "build": "bun run rescript build",
