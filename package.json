@@ -1,34 +1,30 @@
 {
-  "name": "rescript-bun-starter",
-  "version": "1.0.0",
-  "description": "A starter for using Bun with ReScript.",
-  "scripts": {
-    "test": "bun test tests/*.test.*",
-    "build": "bun run rescript build",
-    "dev:rescript": "bun:watch",
-    "dev:server": "bun run --watch src/Main.js",
-    "dev": "bun run rescript build && concurrently 'bun:dev:*'",
-    "dev:test": "bun run test --watch",
-    "watch": "rescript watch",
-    "clean": "rescript clean",
-    "format": "rescript format"
+  "name": "dinit-graph",
+  "version": "0.1.0",
+  "description": "CLI tool to initialize a graph (ReScript v12 + Bun)",
+  "type": "module",
+  "main": "src/DinitGraph.mjs",
+  "bin": {
+    "dinit-graph": "dist/dinit-graph"
   },
-  "keywords": [
-    "rescript",
-    "bun",
-    "starter"
-  ],
-  "author": "Gabriel Nordeborn",
-  "license": "MIT",
-  "dependencies": {
-    "rescript": "^12.2.0",
-    "rescript-bun": "2"
+  "scripts": {
+    "build": "rescript build",
+    "clean": "rescript clean",
+    "bundle": "bun build --target=bun ./src/DinitGraph.res.mjs --outfile ./dist/dinit-graph && chmod +x ./dist/dinit-graph || true",
+    "dev": "bun run build && bun run src/DinitGraph.res.mjs",
+    "watch": "rescript build -w"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "@types/bun": "latest"
+    "rescript": "^12.2.0"
   },
-  "trustedDependencies": [
-    "rescript"
-  ]
+  "keywords": [
+    "cli",
+    "rescript",
+    "bun",
+    "graph"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "rescript-bun": "2"
+  }
 }

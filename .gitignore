@@ -140,9 +140,11 @@ vite.config.ts.timestamp-*
 
 # out folder
 out
+bin
 
 # Bun
 node_modules/
+bun.lock
 bun.lockb
 
 # ReScript build output
@@ -153,6 +155,7 @@ lib/
 # Compiled JS files (if any escape lib/)
 *.bs.js
 *.mjs
+*.res.js
 
 # Editor
 .vscode/

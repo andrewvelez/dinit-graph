@@ -1,29 +1,18 @@
 {
-  "name": "rescript-bun-starter",
-  "version": "2.0.0",
+  "name": "dinit-graph",
   "namespace": true,
-  "sources": [
-    {
-      "dir": "src",
-      "public": [
-        "DinitGraph"
-      ]
-    },
-    {
-      "dir": "tests",
-      "type": "dev"
-    }
-  ],
+  "sources": {
+    "dir": "src",
+    "public": [
+      "DinitGraph"
+    ],
+    "subdirs": true
+  },
   "package-specs": {
     "module": "esmodule",
     "in-source": true
   },
   "suffix": ".mjs",
-  "dependencies": [
-    "rescript-bun"
-  ],
-  "compiler-flags": [
-    "-open RescriptBun",
-    "-open RescriptBun.Globals"
-  ]
+  "dependencies": [],
+  "compiler-flags": []
 }
