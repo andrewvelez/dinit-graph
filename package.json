@@ -2,7 +2,6 @@
   "name": "rescript-bun-starter",
   "version": "1.0.0",
   "description": "A starter for using Bun with ReScript.",
-  "main": "src/DinitGraph.js",
   "scripts": {
     "test": "bun test tests/*.test.*",
     "build": "bun run rescript build",
@@ -22,7 +21,7 @@
   "author": "Gabriel Nordeborn",
   "license": "MIT",
   "dependencies": {
-    "rescript": "^12.0.0",
+    "rescript": "^12.2.0",
     "rescript-bun": "2"
   },
   "devDependencies": {
