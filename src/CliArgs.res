@@ -2,6 +2,8 @@
  * CLI argument parsing module
  * Handles parsing and validation of command line arguments
  */
+module Bun = RescriptBun.Bun
+
 type t = {
   targetDirectory: option<string>,
   helpRequested: bool,
@@ -27,7 +29,7 @@ let parse = (args: array<string>): t => {
     | list{arg, ..._} =>
       Console.error(`Error: Unknown argument '${arg}'`)
       showUsage()
-      Bun.exit(~code=1)
+      Bun.exit(1)
     }
   }
 
@@ -49,7 +51,7 @@ let validate = (parsed: t): result<string, string> => {
   switch (parsed.helpRequested, parsed.targetDirectory) {
   | (true, _) =>
     showHelp()
-    Bun.exit(~code=0)
+    Bun.exit(0)
   | (false, Some(dir)) => Ok(dir)
   | (false, None) => Error("Missing required parameter 'targetDirectory'")
   }
@@ -64,6 +66,6 @@ let processArgs = (): string => {
   | Error(msg) =>
     Console.error(`Error: ${msg}`)
     showUsage()
-    Bun.exit(~code=1)
+    Bun.exit(1)
   }
 }
