@@ -26,7 +26,8 @@
     "rescript-bun": "2"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "@types/bun": "latest"
   },
   "trustedDependencies": [
     "rescript"
