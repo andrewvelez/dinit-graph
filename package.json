@@ -15,12 +15,10 @@
     "watch": "rescript build -w"
   },
   "dependencies": {
-    "@rescript/core": "^1.6.1",
+    "rescript": "^12.2.0",
     "rescript-bun": "^2.1.0"
   },
-  "devDependencies": {
-    "rescript": "^12.2.0"
-  },
+  "devDependencies": {},
   "keywords": [
     "cli",
     "rescript",
