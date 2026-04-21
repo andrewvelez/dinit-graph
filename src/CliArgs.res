@@ -32,7 +32,6 @@ let parse = (args: array<string>): t => {
   }
 
   args->List.fromArray->loop(make())
-  //args->Array.toList->loop(make())
 }
 
 let showHelp = (): unit => {
