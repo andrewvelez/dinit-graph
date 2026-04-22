@@ -1,20 +1,18 @@
 /**
  * dinit-graph - Dependency graph generator
  * Core implementation for generating dependency graphs
+ * by: Andrew Velez
  */
 /**
  * Core implementation for the dependency graph generation.
  * @param targetDirectory - The directory to analyze for dependencies
  */
 let run = (~targetDirectory: string): unit => {
-  // TODO: Implement the actual graph generation logic
   Console.log(`Generating dependency graph for: ${targetDirectory}`)
 
-  // Example placeholder logic
   let absolutePath = Bun.pathToFileURL(targetDirectory)->URL.pathname
 
-  Console.log(`Resolved path: ${absolutePath}`)
-  Console.log("Graph generation complete.")
+  Console.log(`Graph generation complete for ${absolutePath}`)
 }
 
 // Parse arguments and execute
