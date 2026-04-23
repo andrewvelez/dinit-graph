@@ -10,8 +10,8 @@
   "scripts": {
     "build": "rescript build",
     "bundle": "bun build --target=bun ./src/DinitGraph.mjs --bundle --outfile ./dist/dinit-graph",
-    "postbundle": "sed -i '1s;^;#!/usr/bin/env bun\\n;' ./dist/dinit-graph && chmod +x ./dist/dinit-graph || true",
-    "release": "bun run build && bun run bundle && bun run postbundle",
+    "postbundle": "sed -i '1s;^;#!/usr/bin/env bun\\n;' ./dist/dinit-graph && chmod +x ./dist/dinit-graph",
+    "release": "bun run build && bun run bundle",
     "watch": "rescript build -w"
   },
   "dependencies": {
