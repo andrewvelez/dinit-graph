@@ -1,20 +1,39 @@
-/**
+/***
  * dinit-graph - Dependency graph generator
- * Core implementation for generating dependency graphs
  * by: Andrew Velez
  */
-/**
- * Core implementation for the dependency graph generation.
- * @param targetDirectory - The directory to analyze for dependencies
- */
-let run = (~targetDirectory: string): unit => {
-  Console.log(`Generating dependency graph for: ${targetDirectory}`)
+@val external argv: array<string> = "process.argv"
+@val external exit: int => 'a = "process.exit"
 
-  let absolutePath = Bun.pathToFileURL(targetDirectory)->URL.pathname
+type commandOptions = {targetDirectory: string}
 
-  Console.log(`Graph generation complete for ${absolutePath}`)
+let parseArgs = (args: array<string>): commandOptions => {
+  let positionalArgs = args->Array.sliceToEnd(~start=2, ...)
+
+  switch positionalArgs {
+  | [dir] => {targetDirectory: dir}
+  | _ => {
+      Console.log("Usage: dinit-graph <targetDirectory>")
+      exit(1)
+    }
+  }
 }
 
-// Parse arguments and execute
-let targetDirectory = CliArgs.processArgs()
-run(~targetDirectory)
+let cli = async () => {
+  let _options = parseArgs(Bun.argv)
+}
+
+//region Exception wrapper
+try {
+  await cli()
+} catch {
+| JsExn(e) => {
+    Console.error("Error: " ++ JsExn.message(e)->Option.getOr("Unknown error"))
+    exit(1)
+  }
+| _ => {
+    Console.error("An unknown exception occurred.")
+    exit(1)
+  }
+}
+//endregion Exception wrapper
