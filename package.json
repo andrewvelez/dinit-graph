@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "description": "CLI tool to initialize a graph (ReScript v12 + Bun)",
   "type": "module",
-  "main": "src/DinitGraph.res.js",
+  "main": "src/DinitGraph.mjs",
   "bin": {
     "dinit-graph": "dist/dinit-graph"
   },
   "scripts": {
     "build": "rescript build",
-    "bundle": "bun build --target=bun ./src/DinitGraph.mjs --bundle --outfile ./dist/dinit-graph.js",
-    "postbundle": "sed -i '1s;^;#!/usr/bin/env bun\\n;' ./dist/dinit-graph.js && chmod +x ./dist/dinit-graph.js || true",
+    "bundle": "bun build --target=bun ./src/DinitGraph.mjs --bundle --outfile ./dist/dinit-graph",
+    "postbundle": "sed -i '1s;^;#!/usr/bin/env bun\\n;' ./dist/dinit-graph && chmod +x ./dist/dinit-graph || true",
     "release": "bun run build && bun run bundle && bun run postbundle",
     "watch": "rescript build -w"
   },
