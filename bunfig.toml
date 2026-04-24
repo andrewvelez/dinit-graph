@@ -1,2 +1,10 @@
 [install]
 linker = "hoisted"
+[test]
+root = "./src"
+pathIgnorePatterns = [
+  "node_modules/**",
+  "lib/bs/**",
+  "vendor/**",
+  "fixtures/**",
+]

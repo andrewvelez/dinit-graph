@@ -14,11 +14,9 @@
   },
   "suffix": ".mjs",
   "dependencies": [
-    "@rescript/core",
     "rescript-bun"
   ],
   "compiler-flags": [
-    "-open RescriptCore",
     "-open RescriptBun",
     "-open RescriptBun.Globals"
   ]

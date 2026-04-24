@@ -5,13 +5,29 @@
 @val external argv: array<string> = "process.argv"
 @val external exit: int => 'a = "process.exit"
 
-type commandOptions = {targetDirectory: string}
+type commandOptions = {
+  targetDirectory: string,
+}
+
+type dependencyType =
+  | DependsOn
+  | DependsMs
+  | WaitsFor
+  | DependsOnD
+  | DependsMsD
+  | WaitsForD
+  | After
+  | Before
+  | ChainTo
+
+type dependencyProp = {
+  name: dependencyType,
+  service: string,
+}
 
 let parseArgs = (args: array<string>): commandOptions => {
-  let positionalArgs = args->Array.sliceToEnd(~start=2, ...)
-
-  switch positionalArgs {
-  | [dir] => {targetDirectory: dir}
+  switch args {
+  | [_, _, dir] => {targetDirectory: dir}
   | _ => {
       Console.log("Usage: dinit-graph <targetDirectory>")
       exit(1)
@@ -19,8 +35,25 @@ let parseArgs = (args: array<string>): commandOptions => {
   }
 }
 
+let validateServiceDirectory = (targetDir: string): bool => {
+  Console.log(targetDir)
+  false
+}
+
 let cli = async () => {
-  let _options = parseArgs(Bun.argv)
+  let options = parseArgs(Bun.argv)
+
+  if !validateServiceDirectory(options.targetDirectory) {
+    Console.error("Invalid service directory.  No boot service found.")
+    exit(1)
+  }
+
+  // populate the Map of all properties[] keyed by target service name
+
+  // create dependency graph, for each service, add vertex
+  // for each service, add dependents and edge
+
+  // do topological sort
 }
 
 //region Exception wrapper
