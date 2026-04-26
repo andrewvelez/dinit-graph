@@ -1,13 +1,13 @@
 {
-  "name": "dinit-graph",
+  "name": "dinit-dependency-graph",
   "version": "0.1.0",
-  "main": "src/DinitGraph.mjs",
+  "main": "src/DinitDependencyGraph.mjs",
   "dependencies": {
     "rescript": "^12.2.0",
     "rescript-bun": "^2.1.0"
   },
   "bin": {
-    "dinit-graph": "dist/dinit-graph"
+    "dinit-graph": "dist/dinit-dependency-graph"
   },
   "description": "CLI tool to initialize a graph (ReScript v12 + Bun)",
   "keywords": [

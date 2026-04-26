@@ -1,11 +1,8 @@
 {
-  "name": "dinit-graph",
+  "name": "dinit-dependency-graph",
   "namespace": true,
   "sources": {
     "dir": "src",
-    "public": [
-      "DinitGraph"
-    ],
     "subdirs": true
   },
   "package-specs": {
