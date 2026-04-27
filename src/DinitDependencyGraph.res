@@ -75,6 +75,7 @@ let dependencyFromString = (str: string): option<dependency> => {
 }
 
 let parseServiceFile = (input: string): array<serviceProperty> => {
+  Console.log("NEW CODE RUNNING")
   input
   ->String.split("\n")
   ->Array.filterMap(line => {
@@ -158,19 +159,19 @@ let getServicesInDirectory = (dirPath: string): array<string> => {
   }
 }
 
-let addVertexIfNew = (g: DAG.graph, vertex: string): unit => {
+let addVertexIfNew = (g: Dag.graph, vertex: string): unit => {
   try {
-    g->DAG.addVertex(vertex)
+    g->Dag.addVertex(vertex)
   } catch {
-  | DAG.DuplicateVertex(_) => () // Already exists, that's fine
+  | Dag.DuplicateVertex(_) => () // Already exists, that's fine
   }
 }
 
-let addEdgeWithDirection = (g: DAG.graph, from: string, to_: string, isReverse: bool): unit => {
+let addEdgeWithDirection = (g: Dag.graph, from: string, to_: string, isReverse: bool): unit => {
   if isReverse {
-    g->DAG.addEdge(to_, from) // Reverse: dependency -> service
+    g->Dag.addEdge(to_, from) // Reverse: dependency -> service
   } else {
-    g->DAG.addEdge(from, to_) // Normal: service -> dependency
+    g->Dag.addEdge(from, to_) // Normal: service -> dependency
   }
 }
 
@@ -184,7 +185,7 @@ let resolveDependency = (prop: serviceProperty, targetDir: string): array<string
 
 }
 
-let rec addServiceToGraph = (g: DAG.graph, serviceName: string, dependencies: serviceDependencies,
+let rec addServiceToGraph = (g: Dag.graph, serviceName: string, dependencies: serviceDependencies,
   visited: Dict.t<bool>, targetDir: string) => {
 
   switch visited->Dict.get(serviceName) {
@@ -211,7 +212,7 @@ let rec addServiceToGraph = (g: DAG.graph, serviceName: string, dependencies: se
               isReverse,
             )
           } catch {
-          | DAG.CycleDetected(msg) => Console.warn(msg)
+          | Dag.CycleDetected(msg) => Console.warn(msg)
           }
 
           addServiceToGraph(
@@ -228,8 +229,8 @@ let rec addServiceToGraph = (g: DAG.graph, serviceName: string, dependencies: se
 
 }
 
-let buildDependencyGraph = (dependencies: serviceDependencies, targetDir: string): DAG.graph => {
-  let g = DAG.make()
+let buildDependencyGraph = (dependencies: serviceDependencies, targetDir: string): Dag.graph => {
+  let g = Dag.make()
   let visited: Dict.t<bool> = Dict.make()
   let bootService = "boot"
 
@@ -239,55 +240,29 @@ let buildDependencyGraph = (dependencies: serviceDependencies, targetDir: string
   g
 }
 
-let printGraphAscii = (graph: DAG.graph): unit => {
-  Console.log("\n" ++ graph->DAG.graphAsAscii)
+let printGraphAscii = (graph: Dag.graph): unit => {
+  Console.log("\n" ++ graph->Dag.graphAsAscii)
 }
 
-let printTopologicalOrder = (graph: DAG.graph): unit => {
+let printTopologicalOrder = (graph: Dag.graph): unit => {
   try {
-    let sortOrder = graph->DAG.topologicalSort
+    let sortOrder = graph->Dag.topologicalSort
     Console.log("Topological order:")
     Console.log(sortOrder->Array.join(" -> "))
   } catch {
-  | DAG.CycleDetected(msg) => Console.error("Error: " ++ msg)
+  | Dag.CycleDetected(msg) => Console.error("Error: " ++ msg)
   }
 }
 
-let printTiers = (graph: DAG.graph): unit => {
+let printTiers = (graph: Dag.graph): unit => {
   try {
-    let tiers = graph->DAG.topologicalSortTiers
+    let tiers = graph->Dag.topologicalSortTiers
     Console.log("\nDependency tiers:")
     tiers->Array.forEachWithIndex((tier, index) => {
       Console.log(`Tier ${Int.toString(index + 1)}: ${tier->Array.join(", ")}`)
     })
   } catch {
-  | DAG.CycleDetected(msg) => Console.error("Error: " ++ msg)
+  | Dag.CycleDetected(msg) => Console.error("Error: " ++ msg)
   }
 }
 
-//region "graphCli + Exception handling"
-let graphCli = () => {
-
-  let serviceDirectory = parseArgs(Bun.argv)
-  let dictDependencies: serviceDependencies = parseServiceDirectory(serviceDirectory)
-  let depGraph = buildDependencyGraph(dictDependencies, serviceDirectory)
-
-  printGraphAscii(depGraph)
-  printTopologicalOrder(depGraph)
-  printTiers(depGraph)
-
-}
-
-try {
-  graphCli()
-} catch {
-| JsExn(e) => {
-    Console.error("Error: " ++ JsExn.message(e)->Option.getOr("Unknown error"))
-    exit(1)
-  }
-| _ => {
-    Console.error("An unknown exception occurred.")
-    exit(1)
-  }
-}
-//endregion "graphCli + Exception handling"

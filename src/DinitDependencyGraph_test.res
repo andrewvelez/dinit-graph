@@ -5,35 +5,9 @@
 
 // --- Bun Test Bindings ---
 open DinitDependencyGraph
-
-type expectMatchers<'a>
-
-@val external describe: (string, unit => unit) => unit = "describe"
-@val external test: (string, unit => unit) => unit = "test"
-@val external expect: 'a => expectMatchers<'a> = "expect"
-
-@send external toBe: (expectMatchers<'a>, 'a) => unit = "toBe"
-@send external toEqual: (expectMatchers<'a>, 'a) => unit = "toEqual"
-@send external toContain: (expectMatchers<'container>, 'item) => unit = "toContain"
-@send external toThrow: expectMatchers<unit => 'a> => unit = "toThrow"
-@send external toBeDefined: expectMatchers<'a> => unit = "toBeDefined"
-@send external toHaveLength: (expectMatchers<array<'a>>, int) => unit = "toHaveLength"
+open BunTest
 
 // --- Tests ---
-
-describe("Dependency Type Conversion", () => {
-  test("dependencyFromString converts valid dependency types", () => {
-    // Note: These functions are internal, but we can test through integration
-    // or by exposing them. For now, we'll test the behavior through parseServiceFile
-    
-    // This test validates that the regex and type conversion work correctly
-    let content = "depends-on = test-service"
-    let result = content->String.split("\n")
-    // We can't directly access dependencyFromString, but we can verify
-    // the parsing works through parseServiceFile if it's exported
-    expect(true)->toBe(true) // Placeholder - see integration tests below
-  })
-})
 
 describe("Service File Parsing", () => {
   test("parseServiceFile extracts dependency properties", () => {
@@ -47,12 +21,22 @@ chain-to = service-f`
     let result = parseServiceFile(content)
     
     expect(result)->toHaveLength(6)
-    expect(result->Array.get(0)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-a")
-    expect(result->Array.get(1)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-b")
-    expect(result->Array.get(2)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-c")
-    expect(result->Array.get(3)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-d")
-    expect(result->Array.get(4)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-e")
-    expect(result->Array.get(5)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-f")
+    switch result->Array.get(0) {
+      | Some(v) => expect(v.service)->toBe("service-a")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(1) {
+      | Some(v) => expect(v.service)->toBe("service-b")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(2) {
+      | Some(v) => expect(v.service)->toBe("service-c")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(3) {
+      | Some(v) => expect(v.service)->toBe("service-d")
+      | None => failwith("expected first element")
+    }
   })
 
   test("parseServiceFile handles different assignment operators", () => {
@@ -80,9 +64,18 @@ waits-for = service-c`
     let result = parseServiceFile(content)
     
     expect(result)->toHaveLength(3)
-    expect(result->Array.get(0)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-a")
-    expect(result->Array.get(1)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-b")
-    expect(result->Array.get(2)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-c")
+    switch result->Array.get(0) {
+      | Some(v) => expect(v.service)->toBe("service-a")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(1) {
+      | Some(v) => expect(v.service)->toBe("service-b")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(2) {
+      | Some(v) => expect(v.service)->toBe("service-c")
+      | None => failwith("expected first element")
+    }
   })
 
   test("parseServiceFile handles directory dependencies", () => {
@@ -93,9 +86,18 @@ waits-for.d = third-dir`
     let result = parseServiceFile(content)
     
     expect(result)->toHaveLength(3)
-    expect(result->Array.get(0)->Option.getOr({name: DependsOn, service: ""}).name)->toBe(DependsOnD)
-    expect(result->Array.get(1)->Option.getOr({name: DependsOn, service: ""}).name)->toBe(DependsMsD)
-    expect(result->Array.get(2)->Option.getOr({name: DependsOn, service: ""}).name)->toBe(WaitsForD)
+    switch result->Array.get(0) {
+      | Some(v) => expect(v.service)->toBe("service-a")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(1) {
+      | Some(v) => expect(v.service)->toBe("service-b")
+      | None => failwith("expected first element")
+    }
+    switch result->Array.get(2) {
+      | Some(v) => expect(v.service)->toBe("service-c")
+      | None => failwith("expected first element")
+    }
   })
 
   test("parseServiceFile returns empty array for invalid input", () => {
@@ -170,7 +172,7 @@ describe("Graph Building", () => {
     let graph = buildDependencyGraph(dependencies, ".")
     
     // Should have at least the boot node
-    expect(graph->DAG.graphAsAscii)->toContain("boot")
+    expect(graph->Dag.graphAsAscii)->toContain("boot")
   })
 
   test("buildDependencyGraph adds service nodes and edges", () => {
@@ -183,7 +185,7 @@ describe("Graph Building", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     expect(ascii)->toContain("test-service")
     expect(ascii)->toContain("dependency-a")
@@ -202,7 +204,7 @@ describe("Graph Building", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     // Before creates reverse edge: service-b -> service-a
     expect(ascii)->toContain("service-a")
@@ -222,7 +224,7 @@ describe("Graph Building", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     // Should handle duplicate without crashing
     expect(ascii)->toContain("service-b")
@@ -241,7 +243,7 @@ describe("Graph Building", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     // All services should appear in the graph
     expect(ascii)->toContain("service-a")
@@ -268,11 +270,11 @@ describe("Topological Sorting", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let sorted = graph->DAG.topologicalSort
+    let sorted = graph->Dag.topologicalSort
     
     // Check that dependencies come before dependents
     let indexOf = (arr: array<string>, item: string): int => {
-      arr->Array.findIndex(x => x == item)->Option.getOr(-1)
+      arr->Array.findIndex(x => x == item)
     }
     
     let bootIdx = sorted->indexOf("boot")
@@ -294,7 +296,7 @@ describe("Topological Sorting", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let sorted = graph->DAG.topologicalSort
+    let sorted = graph->Dag.topologicalSort
     
     // Both service-a and service-b should be before boot
     expect(sorted)->toContain("service-a")
@@ -315,13 +317,13 @@ describe("Integration Tests", () => {
     
     // Try to get tiers
     try {
-      let tiers = graph->DAG.topologicalSortTiers
+      let tiers = graph->Dag.topologicalSortTiers
       expect(tiers)->toBeDefined
       
       // Should have at least one tier (the boot node)
       expect(tiers->Array.length > 0)->toBe(true)
     } catch {
-    | DAG.CycleDetected(msg) => {
+    | Dag.CycleDetected(msg) => {
         // If cycle detected, that's also a valid result
         expect(msg)->toBeDefined
       }
@@ -336,7 +338,7 @@ describe("Integration Tests", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     // ChainTo creates reverse dependency (like Before)
     expect(ascii)->toContain("service-a")
@@ -356,7 +358,7 @@ describe("Integration Tests", () => {
     ])
     
     let graph = buildDependencyGraph(dependencies, ".")
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     // All dependencies should be in the graph
     expect(ascii)->toContain("dep-a")
@@ -371,22 +373,22 @@ describe("Integration Tests", () => {
 
 describe("Graph Output Formatting", () => {
   test("ASCII graph output contains graph structure", () => {
-    let graph = DAG.make()
-    graph->DAG.addVertex("test-service")
+    let graph = Dag.make()
+    graph->Dag.addVertex("test-service")
     
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     
     expect(ascii)->toContain("Directed Acyclic Graph")
     expect(ascii)->toContain("test-service")
   })
 
   test("topological order output format", () => {
-    let graph = DAG.make()
-    graph->DAG.addVertex("A")
-    graph->DAG.addVertex("B")
-    graph->DAG.addEdge("A", "B")
+    let graph = Dag.make()
+    graph->Dag.addVertex("A")
+    graph->Dag.addVertex("B")
+    graph->Dag.addEdge("A", "B")
     
-    let sorted = graph->DAG.topologicalSort
+    let sorted = graph->Dag.topologicalSort
     
     // Should be an array with proper ordering
     expect(sorted->Array.length)->toBe(2)
@@ -421,7 +423,7 @@ describe("Error Handling", () => {
     expect(graph)->toBeDefined
     
     // But topological sort should throw
-    expect(() => graph->DAG.topologicalSort)->toThrow
+    expect(() => graph->Dag.topologicalSort)->toThrow
   })
 
   test("handles empty service directory", () => {
@@ -429,7 +431,7 @@ describe("Error Handling", () => {
     let graph = buildDependencyGraph(dependencies, "/tmp/empty-dir")
     
     // Should create graph with just boot node
-    let ascii = graph->DAG.graphAsAscii
+    let ascii = graph->Dag.graphAsAscii
     expect(ascii)->toContain("boot")
   })
 })
