@@ -46,7 +46,7 @@ type serviceDependencies = Dict.t<array<serviceProperty>>
 //endregion "Types"
 
 let dependencyTypes = "depends-on|depends-ms|waits-for|depends-on\\.d|depends-ms\\.d|waits-for\\.d|after|before|chain-to"
-let propPattern = `^\s*(${dependencyTypes})\s*[:=]\s*([^#\s]+.*?)(?:\s+|#|$)`
+let propPattern = `^\\s*(${dependencyTypes})\\s*[:=]\\s*([^#\\s]+.*?)(?:\\s+|#|$)`
 let propRegex = RegExp.fromString(propPattern)
 
 let parseArgs = (args: array<string>): directory => {
@@ -75,7 +75,6 @@ let dependencyFromString = (str: string): option<dependency> => {
 }
 
 let parseServiceFile = (input: string): array<serviceProperty> => {
-  Console.log("NEW CODE RUNNING")
   input
   ->String.split("\n")
   ->Array.filterMap(line => {

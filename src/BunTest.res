@@ -50,7 +50,7 @@ type spy<'args, 'ret>
 @send external toHaveBeenCalledWith: (matcher<'a>, 'b) => unit = "toHaveBeenCalledWith"
 
 /* Negation */
-@get external not: matcher<'a> => matcher<'a> = "not"
+@get external not_: matcher<'a> => matcher<'a> = "not"
 
 /* Mocking */
 @module("bun:test")
