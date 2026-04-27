@@ -4,7 +4,6 @@
  */
 
 //region "Import, Modules, etc"
-@val external argv: array<string> = "process.argv"
 @val external exit: int => 'a = "process.exit"
 
 @module("node:fs")
@@ -25,9 +24,7 @@ external readFileSync: (string, @as(json`"utf8"`) _) => string = "readFileSync"
 //endregion "Import, Modules, etc"
 
 //region "Types"
-type commandOptions = {
-  targetDirectory: string,
-}
+type directory = string
 
 type dependency =
   | DependsOn
@@ -45,12 +42,16 @@ type serviceProperty = {
   service: string,
 }
 
-type serviceProperties = Dict.t<array<serviceProperty>>
+type serviceDependencies = Dict.t<array<serviceProperty>>
 //endregion "Types"
 
-let parseArgs = (args: array<string>): commandOptions => {
+let dependencyTypes = "depends-on|depends-ms|waits-for|depends-on\\.d|depends-ms\\.d|waits-for\\.d|after|before|chain-to"
+let propPattern = `^\s*(${dependencyTypes})\s*[:=]\s*([^#\s]+.*?)(?:\s+|#|$)`
+let propRegex = RegExp.fromString(propPattern)
+
+let parseArgs = (args: array<string>): directory => {
   switch args {
-  | [_, _, dir] => {targetDirectory: dir}
+  | [_, _, dir] => dir
   | _ => {
       Console.log("Usage: dinit-graph <targetDirectory>")
       exit(1)
@@ -73,16 +74,12 @@ let dependencyFromString = (str: string): option<dependency> => {
   }
 }
 
-let dependencyTypes = "depends-on|depends-ms|waits-for|depends-on\\.d|depends-ms\\.d|waits-for\\.d|after|before|chain-to"
-let pattern = `^\s*(${dependencyTypes})\s*[:=]\s*([^#\s]+.*?)(?:\s+|#|$)`
-let regex = RegExp.fromString(pattern, ~flags="g")
-
 let parseServiceFile = (input: string): array<serviceProperty> => {
   input
   ->String.split("\n")
   ->Array.filterMap(line => {
     line
-    ->String.match(regex)
+    ->String.match(propRegex)
     ->Option.flatMap(result => {
       switch result {
       | [_, Some(keyStr), Some(valStr)] =>
@@ -99,8 +96,8 @@ let parseServiceFile = (input: string): array<serviceProperty> => {
   })
 }
 
-let parseServiceDirectory = (serviceDir: string): serviceProperties => {
-  let emptyProperties: serviceProperties = Dict.make()
+let parseServiceDirectory = (serviceDir: string): serviceDependencies => {
+  let propertyDict: serviceDependencies = Dict.make()
 
   try {
     let files = readdirSyncRecursive(serviceDir)
@@ -115,7 +112,7 @@ let parseServiceDirectory = (serviceDir: string): serviceProperties => {
           let parsed = parseServiceFile(content)
 
           if parsed->Array.length > 0 {
-            emptyProperties->Dict.set(filename, parsed)
+            propertyDict->Dict.set(filename, parsed)
           }
         } catch {
         | _ => () // Skip files that cause errors during reading/parsing
@@ -123,22 +120,166 @@ let parseServiceDirectory = (serviceDir: string): serviceProperties => {
       }
     })
 
-    emptyProperties
+    propertyDict
   } catch {
   | _ =>
     Console.error("An unexpected error occurred while reading directory: " ++ serviceDir)
-    emptyProperties
+    propertyDict
   }
 }
 
-let cli = async () => {
-  let options = parseArgs(Bun.argv)
-  let directoryProps = parseServiceDirectory(options.targetDirectory)
+let isReverseDependency = (dep: dependency): bool => {
+  switch dep {
+  | Before | ChainTo => true
+  | _ => false
+  }
 }
 
-//region Exception wrapper
+let isDirectoryDependency = (dep: dependency): bool => {
+  switch dep {
+  | DependsOnD | DependsMsD | WaitsForD => true
+  | _ => false
+  }
+}
+
+let getServicesInDirectory = (dirPath: string): array<string> => {
+  try {
+    let files = readdirSyncRecursive(dirPath)
+    files->Array.filter(filename => {
+      let fullPath = join(dirPath, filename)
+      try {
+        statSync(fullPath)->RescriptBun.Fs.Stats.isFile
+      } catch {
+      | _ => false
+      }
+    })
+  } catch {
+  | _ => []
+  }
+}
+
+let addVertexIfNew = (g: DAG.graph, vertex: string): unit => {
+  try {
+    g->DAG.addVertex(vertex)
+  } catch {
+  | DAG.DuplicateVertex(_) => () // Already exists, that's fine
+  }
+}
+
+let addEdgeWithDirection = (g: DAG.graph, from: string, to_: string, isReverse: bool): unit => {
+  if isReverse {
+    g->DAG.addEdge(to_, from) // Reverse: dependency -> service
+  } else {
+    g->DAG.addEdge(from, to_) // Normal: service -> dependency
+  }
+}
+
+let resolveDependency = (prop: serviceProperty, targetDir: string): array<string> => {
+
+  if isDirectoryDependency(prop.name) {
+    getServicesInDirectory(join(targetDir, prop.service))
+  } else {
+    [prop.service]
+  }
+
+}
+
+let rec addServiceToGraph = (g: DAG.graph, serviceName: string, dependencies: serviceDependencies,
+  visited: Dict.t<bool>, targetDir: string) => {
+
+  switch visited->Dict.get(serviceName) {
+  | Some(_) => ()
+  | None => {
+      visited->Dict.set(serviceName, true)
+      addVertexIfNew(g, serviceName)
+
+      let serviceDeps =
+        dependencies->Dict.get(serviceName)->Option.getOr([])
+
+      serviceDeps->Array.forEach(prop => {
+        let isReverse = isReverseDependency(prop.name)
+        let resolved = resolveDependency(prop, targetDir)
+
+        resolved->Array.forEach(depService => {
+          addVertexIfNew(g, depService)
+
+          try {
+            addEdgeWithDirection(
+              g,
+              serviceName,
+              depService,
+              isReverse,
+            )
+          } catch {
+          | DAG.CycleDetected(msg) => Console.warn(msg)
+          }
+
+          addServiceToGraph(
+            g,
+            depService,
+            dependencies,
+            visited,
+            targetDir,
+          )
+        })
+      })
+    }
+  }
+
+}
+
+let buildDependencyGraph = (dependencies: serviceDependencies, targetDir: string): DAG.graph => {
+  let g = DAG.make()
+  let visited: Dict.t<bool> = Dict.make()
+  let bootService = "boot"
+
+  addVertexIfNew(g, bootService)
+  addServiceToGraph(g, bootService, dependencies, visited, targetDir)
+
+  g
+}
+
+let printGraphAscii = (graph: DAG.graph): unit => {
+  Console.log("\n" ++ graph->DAG.graphAsAscii)
+}
+
+let printTopologicalOrder = (graph: DAG.graph): unit => {
+  try {
+    let sortOrder = graph->DAG.topologicalSort
+    Console.log("Topological order:")
+    Console.log(sortOrder->Array.join(" -> "))
+  } catch {
+  | DAG.CycleDetected(msg) => Console.error("Error: " ++ msg)
+  }
+}
+
+let printTiers = (graph: DAG.graph): unit => {
+  try {
+    let tiers = graph->DAG.topologicalSortTiers
+    Console.log("\nDependency tiers:")
+    tiers->Array.forEachWithIndex((tier, index) => {
+      Console.log(`Tier ${Int.toString(index + 1)}: ${tier->Array.join(", ")}`)
+    })
+  } catch {
+  | DAG.CycleDetected(msg) => Console.error("Error: " ++ msg)
+  }
+}
+
+//region "graphCli + Exception handling"
+let graphCli = () => {
+
+  let serviceDirectory = parseArgs(Bun.argv)
+  let dictDependencies: serviceDependencies = parseServiceDirectory(serviceDirectory)
+  let depGraph = buildDependencyGraph(dictDependencies, serviceDirectory)
+
+  printGraphAscii(depGraph)
+  printTopologicalOrder(depGraph)
+  printTiers(depGraph)
+
+}
+
 try {
-  await cli()
+  graphCli()
 } catch {
 | JsExn(e) => {
     Console.error("Error: " ++ JsExn.message(e)->Option.getOr("Unknown error"))
@@ -149,4 +290,4 @@ try {
     exit(1)
   }
 }
-//endregion Exception wrapper
+//endregion "graphCli + Exception handling"
