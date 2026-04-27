@@ -4,6 +4,8 @@
  */
 
 // --- Bun Test Bindings ---
+open DinitDependencyGraph
+
 type expectMatchers<'a>
 
 @val external describe: (string, unit => unit) => unit = "describe"
@@ -42,7 +44,7 @@ after = service-d
 before = service-e
 chain-to = service-f`
     
-    let result = DinitDependencyGraph.parseServiceFile(content)
+    let result = parseServiceFile(content)
     
     expect(result)->toHaveLength(6)
     expect(result->Array.get(0)->Option.getOr({name: DependsOn, service: ""}).service)->toBe("service-a")

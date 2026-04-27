@@ -1,6 +1,6 @@
 {
   "name": "dinit-dependency-graph",
-  "namespace": true,
+  "namespace": false,
   "sources": {
     "dir": "src",
     "subdirs": true

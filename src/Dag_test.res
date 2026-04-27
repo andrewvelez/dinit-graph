@@ -1,4 +1,6 @@
 // --- Bun Test Bindings ---
+open DAG
+
 type expectMatchers<'a>
 
 @val external describe: (string, unit => unit) => unit = "describe"
